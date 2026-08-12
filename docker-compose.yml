@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  aegisq:
+    build: .
+    container_name: aegisq-miniapp
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      - aegisq_data:/app/data
+    environment:
+      - TZ=America/Bogota
+      - LOG_LEVEL=INFO
+
+volumes:
+  aegisq_data:
