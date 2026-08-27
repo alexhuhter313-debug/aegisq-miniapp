@@ -1,19 +1,15 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  aegisq:
+  frontend:
     build: .
-    container_name: aegisq-miniapp
+    container_name: aegisq-frontend
     restart: unless-stopped
     ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app/backend
-      - ./frontend:/app/frontend
-      - aegisq_data:/app/data
-    environment:
-      - TZ=America/Bogota
-      - LOG_LEVEL=INFO
+      - "8080:80"
+    networks:
+      - aegisq-net
 
-volumes:
-  aegisq_data:
+networks:
+  aegisq-net:
+    driver: bridge
