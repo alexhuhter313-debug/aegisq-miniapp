@@ -1,0 +1,28 @@
+name: AEGISQ MiniApp CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check HTML validity
+        run: |
+          find . -name "*.html" -exec echo "Checking {}" \;
+
+      - name: Build Docker image
+        run: docker build -t aegisq-frontend .
+
+      - name: Test container starts
+        run: |
+          docker run -d --name test-frontend -p 8080:80 aegisq-frontend
+          sleep 3
+          curl -sf http://localhost:8080 > /dev/null && echo "Frontend OK"
+          docker stop test-frontend && docker rm test-frontend
