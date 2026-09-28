@@ -1,9 +1,8 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.0
-websockets==13.0
-pydantic==2.9.0
-python-telegram-bot==21.6
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-telegram-bot>=20.0
 numpy>=1.24.0
 scikit-learn>=1.3.0
 scipy>=1.11.0
-# shadow313 installed as sibling: pip install -e ../shadow313
+pandas>=2.0.0
+websockets>=12.0
