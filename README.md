@@ -1,29 +1,34 @@
 # AEGISQ Mini App
 
-Telegram Mini App + Docker backend for your security tools.
+Telegram Mini App dashboard for the AEGISQ threat detection platform.
+
+## Architecture
+
+```
+aegisq-miniapp/
+├── frontend/index.html   # Telegram Mini App UI
+├── backend/main.py       # FastAPI proxy + WebSocket
+├── bot/bot.py            # Telegram bot bridge
+├── Dockerfile            # Multi-stage container
+└── docker-compose.yml    # Single service
+```
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/alexhuhter313-debug/aegisq-miniapp
-cd aegisq-miniapp
-docker compose up -d
+# Set your bot token
+export BOT_TOKEN="your_telegram_bot_token"
+export ALLOWED_USER_ID="your_telegram_id"
+
+docker compose up -d --build
 ```
 
-## Architecture
+## Endpoints
 
-- **Frontend**: Telegram Mini App (HTML/JS) - dashboard, scanner, logs, config
-- **Backend**: FastAPI + WebSocket - REST API for modules, real-time alerts
-- **Bot**: Telegram bot bridge - Mini App auth, /commands, push alerts
-- **Docker**: 24/7 auto-restart, zero maintenance
-
-## Connect to Telegram
-
-1. Create a bot via @BotFather
-2. Set Mini App URL to your server: `https://your-server.com`
-3. Set BOT_TOKEN env var
-4. Deploy and go
-
-## Connect to shadow313
-
-Replace the mock modules in `backend/main.py` with real imports from your shadow313/AEGISQ stack.
+| Endpoint | Description |
+|----------|-------------|
+| `:80` | Telegram Mini App (frontend) |
+| `:8001` | Backend API (proxies to detector) |
+| `/api/detector/report` | Latest detection report |
+| `/api/detector/detect` | Run detection |
+| `/api/ws` | WebSocket for real-time updates |

@@ -1,1 +1,241 @@
-PLACEHOLDER_REPLACEMENT
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AEGISQ</title>
+    <style>
+        :root {
+            --bg: #0f0f1a;
+            --card: #1a1a2e;
+            --accent: #00d4ff;
+            --danger: #ff3b5c;
+            --warning: #ffa726;
+            --success: #66bb6a;
+            --text: #e0e0ff;
+            --muted: #8888aa;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text); padding: 16px; min-height: 100vh;
+        }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #2a2a4a;
+        }
+        .header h1 { font-size: 20px; font-weight: 700; }
+        .header h1 span { color: var(--accent); }
+        .status-dot {
+            display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-dot.offline { background: var(--danger); }
+        .grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+        }
+        .card {
+            background: var(--card); border-radius: 12px; padding: 16px;
+            border: 1px solid #2a2a4a; transition: 0.2s;
+        }
+        .card:active { transform: scale(0.97); }
+        .card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+        .card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .card.full { grid-column: 1 / -1; }
+        .full-width { grid-column: 1 / -1; }
+        .btn {
+            background: var(--accent); color: #000; border: none; border-radius: 10px;
+            padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer;
+            width: 100%; transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.97); opacity: 0.8; }
+        .btn.danger { background: var(--danger); color: #fff; }
+        .severity-bar { display: flex; gap: 4px; margin-top: 8px; }
+        .severity-bar .seg { height: 6px; border-radius: 3px; flex: 1; }
+        .severity-bar .seg.critical { background: var(--danger); }
+        .severity-bar .seg.high { background: #ff7043; }
+        .severity-bar .seg.medium { background: var(--warning); }
+        .severity-bar .seg.low { background: #42a5f5; }
+        .severity-bar .seg.empty { background: #2a2a4a; }
+        .log { font-family: 'Courier New', monospace; font-size: 12px; color: var(--muted); }
+        .alert-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #2a2a4a;
+        }
+        .alert-item:last-child { border-bottom: none; }
+        .badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+        .badge.critical { background: var(--danger); color: #fff; }
+        .badge.high { background: #ff7043; color: #fff; }
+        .badge.medium { background: var(--warning); color: #000; }
+        .badge.low { background: #42a5f5; color: #fff; }
+        .loading { text-align: center; padding: 40px; color: var(--muted); }
+        .spinner { width: 32px; height: 32px; border: 3px solid #2a2a4a; border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: #f0f0f8; --card: #ffffff; --text: #1a1a2e; --muted: #666688;
+                border: 1px solid #ddddee;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AEGIS<span>Q</span></h1>
+        <div><span class="status-dot online" id="statusDot"></span><span id="statusText">Online</span></div>
+    </div>
+
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <div>Loading dashboard...</div>
+    </div>
+
+    <div id="dashboard" style="display:none">
+        <div class="grid">
+            <div class="card">
+                <div class="label">Total Flows</div>
+                <div class="value" id="totalFlows">—</div>
+            </div>
+            <div class="card">
+                <div class="label">Alerts</div>
+                <div class="value" id="alertCount" style="color:var(--danger)">—</div>
+            </div>
+            <div class="card">
+                <div class="label">Detection Rate</div>
+                <div class="value" id="detectionRate">—</div>
+            </div>
+            <div class="card">
+                <div class="label">FP</div>
+                <div class="value" id="falsePositive">—</div>
+            </div>
+        </div>
+
+        <div class="card full">
+            <div class="label">Severity Breakdown</div>
+            <div class="severity-bar" id="severityBar">
+                <div class="seg empty" style="flex:1"></div>
+            </div>
+            <div style="display:flex; gap:16px; margin-top:8px; font-size:12px; color:var(--muted)" id="severityLabels"></div>
+        </div>
+
+        <div class="card full" style="margin-bottom:12px">
+            <div class="label">Recent Alerts</div>
+            <div id="alertList">
+                <div style="color:var(--muted); text-align:center; padding:16px">No alerts to display</div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px">
+            <button class="btn" onclick="refreshReport()">🔄 Refresh</button>
+            <button class="btn danger" onclick="runPipeline()">⚡ Run Pipeline</button>
+        </div>
+    </div>
+
+    <script>
+        const API = window.Telegram?.WebApp?.initDataUnsafe?.start_param 
+            ? 'https://your-deployed-api.com' 
+            : '/api';
+        // Use direct proxy if running behind same origin
+        const BACKEND = '';
+
+        async function fetchReport() {
+            const url = BACKEND ? BACKEND + '/detector/report' : '/detector/report';
+            try {
+                const r = await fetch(url);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return await r.json();
+            } catch(e) {
+                console.error('Fetch error:', e);
+                return null;
+            }
+        }
+
+        function updateDashboard(data) {
+            if (!data || data.status === 'error') {
+                document.getElementById('statusDot').className = 'status-dot offline';
+                document.getElementById('statusText').textContent = 'Offline';
+                return;
+            }
+
+            document.getElementById('totalFlows').textContent = data.total_flows?.toLocaleString() || '—';
+            document.getElementById('alertCount').textContent = data.alerts_raised || '0';
+            document.getElementById('detectionRate').textContent = (data.detection_rate || 0) + '%';
+            document.getElementById('falsePositive').textContent = data.false_positives || '0';
+
+            // Severity bar
+            const bySev = data.by_severity || {};
+            const total = Object.values(bySev).reduce((a,b) => a+b, 0) || 1;
+            const order = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+            const bar = document.getElementById('severityBar');
+            const labels = document.getElementById('severityLabels');
+            bar.innerHTML = '';
+            labels.innerHTML = '';
+            order.forEach(sev => {
+                const count = bySev[sev] || 0;
+                const pct = (count / total * 100);
+                if (pct > 0) {
+                    const seg = document.createElement('div');
+                    seg.className = 'seg ' + sev.toLowerCase();
+                    seg.style.flex = pct;
+                    bar.appendChild(seg);
+                }
+                const lbl = document.createElement('span');
+                lbl.innerHTML = `<span style="color:${sev==='CRITICAL'?'var(--danger)':sev==='HIGH'?'#ff7043':sev==='MEDIUM'?'var(--warning)':'#42a5f5'}">●</span> ${sev}: ${count}`;
+                labels.appendChild(lbl);
+            });
+
+            // Alerts
+            // We don't have per-alert data from the report API, so show summary
+            const alertList = document.getElementById('alertList');
+            if (data.by_attack_type) {
+                alertList.innerHTML = '';
+                Object.entries(data.by_attack_type).forEach(([type, count]) => {
+                    const div = document.createElement('div');
+                    div.className = 'alert-item';
+                    const icon = type === 'BENIGN' ? '✅' : type === 'DDoS' ? '🌊' : type === 'DATA_EXFIL' ? '📤' : type === 'C2_BEACON' ? '📡' : type === 'PORT_SCAN' ? '🔍' : '⚠️';
+                    div.innerHTML = `<span>${icon} ${type}</span><span style="font-weight:600">${count}</span>`;
+                    alertList.appendChild(div);
+                });
+            }
+        }
+
+        async function refreshReport() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            const data = await fetchReport();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            updateDashboard(data);
+        }
+
+        async function runPipeline() {
+            const btn = document.querySelector('.btn.danger');
+            btn.textContent = '⏳ Running...';
+            btn.disabled = true;
+            try {
+                const url = BACKEND ? BACKEND + '/detector/detect' : '/detector/detect';
+                await fetch(url, { method: 'POST' });
+                await new Promise(r => setTimeout(r, 2000));
+                await refreshReport();
+            } catch(e) {
+                console.error(e);
+            }
+            btn.textContent = '⚡ Run Pipeline';
+            btn.disabled = false;
+        }
+
+        // Init Telegram WebApp
+        if (window.Telegram?.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
+
+        // Load on start
+        refreshReport();
+
+        // Auto-refresh every 30s
+        setInterval(refreshReport, 30000);
+    </script>
+</body>
+</html>

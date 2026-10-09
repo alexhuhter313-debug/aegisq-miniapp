@@ -1,12 +1,18 @@
 version: '3.8'
 
 services:
-  frontend:
+  miniapp:
     build: .
-    container_name: aegisq-frontend
+    container_name: aegisq-miniapp
     restart: unless-stopped
     ports:
       - "8080:80"
+      - "8001:8001"
+    environment:
+      - DETECTOR_URL=http://aegisq-detector:8000
+      - BOT_TOKEN=${BOT_TOKEN:-}
+      - ALLOWED_USER_ID=${ALLOWED_USER_ID:-0}
+      - MINIAPP_URL=${MINIAPP_URL:-}
     networks:
       - aegisq-net
 
